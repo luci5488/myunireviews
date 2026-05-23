@@ -94,7 +94,8 @@ export default function HomePage() {
   const { data: stats } = useQuery({
     queryKey: ['site-stats'],
     queryFn: () => profApi.stats(),
-    staleTime: 15 * 60_000, // stats change slowly — cache for 15 min
+    staleTime: 60_000,        // consider stale after 1 min
+    refetchInterval: 60_000,  // auto-refresh every 60 seconds
   });
 
   const { data: suggestions, isFetching } = useQuery<{ data: SearchResults }>({
