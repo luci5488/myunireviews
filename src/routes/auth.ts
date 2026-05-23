@@ -47,7 +47,7 @@ function setAuthCookie(res: Response, token: string, remember?: boolean) {
   res.cookie('rmp_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     // remember=true: 30 days | remember=false: session cookie | omitted: 7-day default
     ...(remember === true  ? { maxAge: REMEMBER_ME_MAX_AGE_MS } :
         remember === false ? {}                                  :
