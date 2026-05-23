@@ -1,0 +1,45 @@
+{
+  "name": "myunireviews-api",
+  "version": "1.0.0",
+  "description": "API for MyUniReviews — Australian university professor review platform",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "bash scripts/migrate.sh",
+    "db:migrate:latest": "psql $DATABASE_URL -f migrations/020_notifications_seen.sql",
+    "snapshot": "bash scripts/snapshot.sh",
+    "rollback": "bash scripts/rollback.sh",
+    "snapshots": "bash scripts/list-snapshots.sh"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
+    "@sentry/node": "^10.53.1",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "pino": "^10.3.1",
+    "resend": "^6.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.6",
+    "nodemon": "^3.1.4",
+    "pino-pretty": "^13.1.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}

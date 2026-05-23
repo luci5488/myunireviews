@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --page-bg: #f9fafb;
+    --page-bg-rgb: 249, 250, 251;
+  }
+  .dark {
+    --page-bg: #030712;
+    --page-bg-rgb: 3, 7, 18;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  .dark body {
+    @apply bg-gray-950 text-gray-100;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.2s ease-out;
+  }
+  .animate-vote-pop {
+    animation: votePop 0.8s ease-out forwards;
+    pointer-events: none;
+  }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes votePop {
+  0%   { opacity: 1; transform: translateY(0); }
+  60%  { opacity: 1; transform: translateY(-16px); }
+  100% { opacity: 0; transform: translateY(-24px); }
+}
+
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(50px, -35px) scale(1.15); }
+  66%       { transform: translate(-35px, 30px) scale(0.9); }
+}
+
+.animate-blob {
+  animation: blob 11s ease-in-out infinite;
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count-up {
+  animation: countUp 0.4s ease-out forwards;
+}
+
+@keyframes capBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30%       { transform: translateY(-3px) rotate(-6deg); }
+  50%       { transform: translateY(-5px) rotate(0deg); }
+  70%       { transform: translateY(-3px) rotate(6deg); }
+  85%       { transform: translateY(0) rotate(0deg); }
+}
+
+.group:hover .cap-emoji {
+  animation: capBounce 0.6s ease-in-out;
+}

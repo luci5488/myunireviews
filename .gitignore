@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+dist/
+frontend/.next/
+frontend/out/
+
+# Environment variables — never commit these
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# Rollback snapshots — DB dumps are large; keep them local only
+snapshots/
+.last-snapshot
+
+# Claude Code working directories — never commit these
+.claude/
+frontend/.claude/
