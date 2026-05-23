@@ -20,6 +20,9 @@ import Sentry            from './lib/sentry';
 
 const app = express();
 
+// Trust Railway's proxy so express-rate-limit can read X-Forwarded-For correctly
+app.set('trust proxy', 1);
+
 // ── Security & parsing ─────────────────────────────────────────
 app.use(helmet());
 
