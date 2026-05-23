@@ -9,7 +9,6 @@ import { LoginPromptModal } from '@/components/LoginPromptModal';
 import Link from 'next/link';
 import { CookieBanner } from '@/components/CookieBanner';
 import { BackToTop } from '@/components/BackToTop';
-import { SentryInit } from '@/components/SentryInit';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -41,7 +40,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">{children}</main>
           <CookieBanner />
           <BackToTop />
-          <SentryInit />
           <footer className="border-t border-gray-100 dark:border-gray-800 mt-16 py-6 text-center text-xs text-gray-400 dark:text-gray-500 space-x-4 bg-white dark:bg-gray-900">
             <Link href="/faq" className="hover:text-gray-600 dark:hover:text-gray-300">FAQ</Link>
             <Link href="/guidelines" className="hover:text-gray-600 dark:hover:text-gray-300">Community Guidelines</Link>
