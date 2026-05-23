@@ -10,9 +10,10 @@ export function middleware(request: NextRequest) {
     // nonce covers theme-init.js + Next.js's own generated chunks; unsafe-eval only in dev (HMR)
     `script-src 'self' 'nonce-${nonce}'${isProd ? '' : " 'unsafe-eval'"}`,
     "style-src 'self' 'unsafe-inline'",
-    `connect-src 'self' ${apiUrl} ${apiUrl.replace(/^https?/, 'wss')}`,
-    "img-src 'self' data: blob:",
+    `connect-src 'self' ${apiUrl} ${apiUrl.replace(/^https?/, 'wss')} https://*.ingest.sentry.io https://*.ingest.us.sentry.io`,
+    "img-src 'self' data: blob: https:",
     "font-src 'self'",
+    "worker-src 'self' blob:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
