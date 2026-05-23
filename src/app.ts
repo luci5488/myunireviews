@@ -28,7 +28,17 @@ if (!corsOrigin && process.env.NODE_ENV === 'production') {
   logger.fatal('FATAL: CORS_ORIGIN must be set in production.');
   process.exit(1);
 }
-app.use(cors({ origin: corsOrigin ?? '*', credentials: true }));
+const allowedOrigins = corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : ['*'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(cookieParser());
 app.use(express.json({ limit: '64kb' }));
 
