@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isProd = process.env.NODE_ENV === 'production';
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-  const csp = [
+  const csp = isProd ? [
     "default-src 'self'",
-    // nonce covers theme-init.js + Next.js's own generated chunks; unsafe-eval only in dev (HMR)
-    `script-src 'self' 'nonce-${nonce}'${isProd ? '' : " 'unsafe-eval'"}`,
+    `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
     "style-src 'self' 'unsafe-inline'",
     `connect-src 'self' ${apiUrl} ${apiUrl.replace(/^https?/, 'wss')} https://*.ingest.sentry.io https://*.ingest.us.sentry.io`,
     "img-src 'self' data: blob: https:",
@@ -17,16 +15,11 @@ export function middleware(request: NextRequest) {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-  ].join('; ');
+  ].join('; ') : null;
 
-  // Forward nonce to the server layout via request headers
-  const reqHeaders = new Headers(request.headers);
-  reqHeaders.set('x-nonce', nonce);
-  reqHeaders.set('Content-Security-Policy', csp);
+  const response = NextResponse.next();
 
-  const response = NextResponse.next({ request: { headers: reqHeaders } });
-
-  response.headers.set('Content-Security-Policy', csp);
+  if (csp) response.headers.set('Content-Security-Policy', csp);
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
