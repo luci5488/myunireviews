@@ -57,7 +57,7 @@ const authLimiter = rateLimit({
 
 const readLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 600,
   standardHeaders: true,
   legacyHeaders: false,
 });
