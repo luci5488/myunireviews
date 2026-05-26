@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
 
+const BASE = process.env.NEXT_PUBLIC_APP_URL ?? 'https://myunireviews.com';
+
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
   return {
     rules: [
       {
@@ -10,6 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard', '/my-reviews', '/bookmarks', '/moderation/', '/auth/'],
       },
     ],
-    sitemap: `${base}/sitemap.xml`,
+    sitemap: `${BASE}/sitemap.xml`,
   };
 }
