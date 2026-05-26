@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://myunireviews.com'),
   title: 'MyUniReviews — Find the right professor for your course',
   description: 'Transparent, student-driven professor ratings based on real course experiences.',
+  verification: {
+    google: 'MziaMR4shvl1yvfMyntOaO7zx0T-tMRKlUKbgm49z70',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
