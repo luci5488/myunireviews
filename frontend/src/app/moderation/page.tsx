@@ -460,14 +460,38 @@ export default function ModerationPage() {
           )}
 
           {suggestionsQuery.data?.data.map((s) => (
-            <div key={s.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div key={s.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap text-sm">
                   <span className="font-medium text-purple-700 dark:text-purple-400">New Professor</span>
                   <span className="font-medium">{s.title} {s.first_name} {s.last_name}</span>
+
+                  {/* Verification status badge */}
+                  {s.verification_status === 'unverifiable' && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      ⚠ Not found online
+                      {s.verification_score != null && (
+                        <span className="opacity-60">({Math.round(s.verification_score * 100)}% match)</span>
+                      )}
+                    </span>
+                  )}
+                  {s.verification_status === 'pending' && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse inline-block" />
+                      Verifying…
+                    </span>
+                  )}
+                  {s.verification_status === 'skipped' && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 border border-gray-200 dark:border-gray-600 px-2 py-0.5 rounded-full font-medium">
+                      Verification skipped
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
                   Suggested by {s.suggested_by_username} · {new Date(s.created_at).toLocaleDateString()}
+                  {s.verification_source && (
+                    <span className="ml-1 opacity-60">· checked via {s.verification_source}</span>
+                  )}
                 </p>
                 <div className="mt-2 space-y-0.5 text-sm text-gray-700 dark:text-gray-300">
                   {s.institution_name && <p><span className="text-xs text-gray-400 mr-1">University:</span>{s.institution_name}</p>}

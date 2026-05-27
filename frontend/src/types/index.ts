@@ -155,6 +155,10 @@ export interface ProfessorSuggestion {
   institution_name?: string;
   department_name?: string;
   suggested_by_username: string;
+  /** Auto-verification fields (added by verification service) */
+  verification_status?: 'pending' | 'auto_verified' | 'unverifiable' | 'skipped';
+  verification_source?: string | null;
+  verification_score?: number | null;
 }
 
 export interface Report {

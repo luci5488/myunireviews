@@ -5,6 +5,7 @@ import { authenticate, requireRole, requireVerified, optionalAuth } from '../mid
 import { validate, asyncHandler, paginate } from '../middleware/validate';
 import { AuthRequest } from '../types';
 import { parseId, escapeLike } from '../lib/parseId';
+import { verifySuggestionAsync } from '../services/professorVerification';
 
 const router = Router();
 
@@ -539,9 +540,25 @@ router.post(
        title ?? null, email ?? null, notes ?? null]
     );
 
+    const suggestion = rows[0];
+
+    // Fire-and-forget: attempt auto-verification in the background.
+    // If the professor is found in OpenAlex/ORCID the suggestion will be
+    // auto-approved without moderator involvement.
+    verifySuggestionAsync({
+      id:             suggestion.id,
+      first_name,
+      last_name,
+      title:          title ?? null,
+      email:          email ?? null,
+      institution_id,
+      department_id:  department_id ?? null,
+      suggested_by:   req.user!.id,
+    });
+
     res.status(201).json({
-      data: rows[0],
-      message: 'Suggestion submitted — our team will review it shortly.',
+      data: suggestion,
+      message: 'Suggestion submitted — we\'ll verify it automatically. If we can\'t confirm it online, our team will review it shortly.',
     });
   })
 );

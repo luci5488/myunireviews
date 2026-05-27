@@ -518,6 +518,7 @@ router.get(
       pool.query(
         `SELECT ps.id, ps.first_name, ps.last_name, ps.title, ps.email, ps.notes,
                 ps.status, ps.created_at,
+                ps.verification_status, ps.verification_source, ps.verification_score,
                 i.name AS institution_name,
                 d.name AS department_name,
                 s.username AS suggested_by_username
