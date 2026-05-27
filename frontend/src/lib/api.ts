@@ -364,6 +364,17 @@ export const moderation = {
     req(`/api/moderation/suggestions/${id}/reject`, {
       method: 'PATCH', body: JSON.stringify({ reason }),
     }, token),
+
+  professors: (params: { page?: number; search?: string }, token: string) => {
+    const qs = new URLSearchParams({ page: String(params.page ?? 1), ...(params.search ? { search: params.search } : {}) });
+    return req<Paginated<{ id: number; first_name: string; last_name: string; title: string; email: string; institution_name: string; department_name: string; institution_id: number; department_id: number; is_verified: boolean; is_active: boolean; review_count: number; created_at: string }>>(`/api/moderation/professors?${qs}`, undefined, token);
+  },
+
+  editProfessor: (id: number, data: { first_name?: string; last_name?: string; title?: string; email?: string | null; institution_id?: number; department_id?: number | null }, token: string) =>
+    req(`/api/moderation/professors/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
+
+  deleteProfessor: (id: number, token: string) =>
+    req(`/api/moderation/professors/${id}`, { method: 'DELETE' }, token),
 };
 
 // ── Bookmarks ─────────────────────────────────────────────────

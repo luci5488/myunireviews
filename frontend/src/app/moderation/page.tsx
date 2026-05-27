@@ -9,7 +9,9 @@ import { StarRating } from '@/components/StarRating';
 import { Pagination } from '@/components/Pagination';
 import { clsx } from 'clsx';
 
-type Tab = 'pending' | 'flagged' | 'reports' | 'claims' | 'suggestions' | 'students';
+type Tab = 'pending' | 'flagged' | 'reports' | 'claims' | 'suggestions' | 'students' | 'professors';
+
+type ProfessorRow = { id: number; first_name: string; last_name: string; title: string; email: string; institution_name: string; department_name: string; institution_id: number; department_id: number; is_verified: boolean; is_active: boolean; review_count: number; created_at: string };
 
 export default function ModerationPage() {
   const { token, isModerator, isAdmin, hydrated, login } = useAuth();
@@ -23,6 +25,10 @@ export default function ModerationPage() {
   const [suggestionRejectReason, setSuggestionRejectReason] = useState<Record<number, string>>({});
   const [banReason, setBanReason] = useState<Record<number, string>>({});
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [profSearch, setProfSearch] = useState('');
+  const [editingProf, setEditingProf] = useState<ProfessorRow | null>(null);
+  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', title: '', email: '' });
+  const [deletingProfId, setDeletingProfId] = useState<number | null>(null);
 
   useEffect(() => {
     if (hydrated && !isModerator) router.push('/');
@@ -56,6 +62,25 @@ export default function ModerationPage() {
     queryKey: ['mod-students', page],
     queryFn: () => modApi.students({ page }, token!),
     enabled: tab === 'students' && isAdmin && !!token,
+  });
+
+  const professorsQuery = useQuery({
+    queryKey: ['mod-professors', page, profSearch],
+    queryFn: () => modApi.professors({ page, search: profSearch || undefined }, token!),
+    enabled: tab === 'professors' && !!token,
+  });
+
+  const editProfMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof modApi.editProfessor>[1] }) =>
+      withFresh(t => modApi.editProfessor(id, data, t)),
+    onSuccess: () => { setMutationError(null); setEditingProf(null); queryClient.invalidateQueries({ queryKey: ['mod-professors'] }); },
+    onError,
+  });
+
+  const deleteProfMutation = useMutation({
+    mutationFn: (id: number) => withFresh(t => modApi.deleteProfessor(id, t)),
+    onSuccess: () => { setMutationError(null); setDeletingProfId(null); queryClient.invalidateQueries({ queryKey: ['mod-professors'] }); },
+    onError,
   });
 
   const onError = (err: unknown) =>
@@ -137,6 +162,7 @@ export default function ModerationPage() {
     { key: 'reports', label: 'Reports' },
     { key: 'claims', label: 'Claims' },
     { key: 'suggestions', label: 'Suggestions' },
+    { key: 'professors', label: 'Professors' },
     { key: 'students', label: 'Students', adminOnly: true },
   ];
 
@@ -550,6 +576,127 @@ export default function ModerationPage() {
               onPageChange={setPage}
             />
           )}
+        </div>
+      )}
+
+      {/* Professors management */}
+      {tab === 'professors' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-4">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={profSearch}
+              onChange={(e) => { setProfSearch(e.target.value); setPage(1); }}
+              className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 w-64"
+            />
+          </div>
+
+          {professorsQuery.isLoading && <div className="text-center text-gray-400 py-12">Loading...</div>}
+          {professorsQuery.data?.data.length === 0 && (
+            <div className="text-center py-20 text-gray-400">No professors found.</div>
+          )}
+
+          {professorsQuery.data?.data.map((p) => (
+            <div key={p.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">
+                    {p.title} {p.first_name} {p.last_name}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{p.institution_name} {p.department_name ? `· ${p.department_name}` : ''}</p>
+                  <p className="text-xs text-gray-400 mt-1">{p.review_count} approved review{p.review_count !== 1 ? 's' : ''} · ID #{p.id}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => { setEditingProf(p); setEditForm({ first_name: p.first_name, last_name: p.last_name, title: p.title ?? '', email: p.email ?? '' }); }}
+                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                  >
+                    Edit
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setDeletingProfId(p.id)}
+                      className="text-xs bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {professorsQuery.data && (
+            <Pagination
+              page={page}
+              totalPages={professorsQuery.data.pagination.totalPages}
+              onPageChange={setPage}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Edit professor modal */}
+      {editingProf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Edit Professor</h2>
+            <div className="space-y-3">
+              {(['title', 'first_name', 'last_name', 'email'] as const).map((field) => (
+                <div key={field}>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 capitalize">{field.replace('_', ' ')}</label>
+                  <input
+                    type={field === 'email' ? 'email' : 'text'}
+                    value={editForm[field]}
+                    onChange={(e) => setEditForm((f) => ({ ...f, [field]: e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditingProf(null)}
+                className="flex-1 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => editProfMutation.mutate({ id: editingProf.id, data: editForm })}
+                disabled={editProfMutation.isPending}
+                className="flex-1 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
+              >
+                {editProfMutation.isPending ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete professor confirmation */}
+      {deletingProfId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+            <p className="text-4xl mb-3">⚠️</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Delete Professor?</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This will permanently delete the professor and all their reviews. This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingProfId(null)}
+                className="flex-1 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteProfMutation.mutate(deletingProfId)}
+                disabled={deleteProfMutation.isPending}
+                className="flex-1 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
+              >
+                {deleteProfMutation.isPending ? 'Deleting…' : 'Yes, delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

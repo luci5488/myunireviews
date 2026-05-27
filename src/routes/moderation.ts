@@ -603,6 +603,105 @@ router.patch(
   })
 );
 
+// ─── PROFESSOR MANAGEMENT ─────────────────────────────────────
+
+// GET /api/moderation/professors
+router.get(
+  '/professors',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { page, limit, offset } = paginate(req.query);
+    const search = req.query.search as string | undefined;
+
+    const params: unknown[] = [];
+    let where = '';
+    if (search) {
+      params.push(`%${escapeLike(search)}%`);
+      where = `WHERE (p.first_name ILIKE $1 ESCAPE '\\' OR p.last_name ILIKE $1 ESCAPE '\\')`;
+    }
+
+    const [countResult, rows] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FROM professors p ${where}`, params),
+      pool.query(
+        `SELECT p.id, p.first_name, p.last_name, p.title, p.email,
+                p.is_verified, p.is_active, p.created_at,
+                i.name AS institution_name,
+                d.name AS department_name,
+                p.institution_id, p.department_id,
+                COUNT(r.id) AS review_count
+         FROM professors p
+         LEFT JOIN institutions i ON i.id = p.institution_id
+         LEFT JOIN departments d ON d.id = p.department_id
+         LEFT JOIN reviews r ON r.professor_id = p.id AND r.status = 'approved'
+         ${where}
+         GROUP BY p.id, i.name, d.name
+         ORDER BY p.created_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit, offset]
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0].count);
+    res.json({ data: rows.rows, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } });
+  })
+);
+
+// PATCH /api/moderation/professors/:id
+router.patch(
+  '/professors/:id',
+  validate(z.object({
+    first_name:     z.string().min(1).max(100).optional(),
+    last_name:      z.string().min(1).max(100).optional(),
+    title:          z.string().max(50).optional(),
+    email:          z.string().email().optional().nullable(),
+    institution_id: z.number().int().positive().optional(),
+    department_id:  z.number().int().positive().optional().nullable(),
+  })),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = parseId(req.params.id);
+    if (!id) { res.status(400).json({ error: 'Invalid professor ID' }); return; }
+
+    const fields = req.body as Record<string, unknown>;
+    const allowed = ['first_name', 'last_name', 'title', 'email', 'institution_id', 'department_id'];
+    const updates = Object.entries(fields).filter(([k]) => allowed.includes(k));
+    if (updates.length === 0) { res.status(400).json({ error: 'No fields to update' }); return; }
+
+    const setClauses = updates.map(([k], i) => `${k} = $${i + 1}`).join(', ');
+    const values = updates.map(([, v]) => v);
+
+    const { rows: [prof] } = await pool.query(
+      `UPDATE professors SET ${setClauses}, updated_at = NOW()
+       WHERE id = $${values.length + 1}
+       RETURNING id, first_name, last_name, title, email`,
+      [...values, id]
+    );
+
+    if (!prof) { res.status(404).json({ error: 'Professor not found' }); return; }
+
+    await logAction(req.user!.id, 'edit_professor', 'professor', id, undefined, { fields: Object.fromEntries(updates) });
+    res.json({ data: prof, message: 'Professor updated.' });
+  })
+);
+
+// DELETE /api/moderation/professors/:id  (admin only)
+router.delete(
+  '/professors/:id',
+  requireRole('admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = parseId(req.params.id);
+    if (!id) { res.status(400).json({ error: 'Invalid professor ID' }); return; }
+
+    const { rows: [prof] } = await pool.query(
+      `DELETE FROM professors WHERE id = $1 RETURNING id, first_name, last_name`,
+      [id]
+    );
+
+    if (!prof) { res.status(404).json({ error: 'Professor not found' }); return; }
+
+    await logAction(req.user!.id, 'delete_professor', 'professor', id);
+    res.json({ message: `Professor ${prof.first_name} ${prof.last_name} deleted.` });
+  })
+);
+
 // GET /api/moderation/logs   (audit trail)
 router.get(
   '/logs',
