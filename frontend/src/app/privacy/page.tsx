@@ -1,5 +1,5 @@
 export default function PrivacyPolicyPage() {
-  const updated = '19 April 2026';
+  const updated = '26 May 2026';
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">9. Complaints</h2>
-          <p>If you believe we have breached the Australian Privacy Principles, you may contact us first to resolve the matter. If unsatisfied, you may lodge a complaint with the <strong>Office of the Australian Information Commissioner (OAIC)</strong> at <a href="https://www.oaic.gov.au" className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">oaic.gov.au</a>.</p>
+          <p>If you believe we have breached the Australian Privacy Principles, you may contact us first at <a href="mailto:privacy@myunireviews.com" className="text-blue-600 hover:underline">privacy@myunireviews.com</a> to resolve the matter. If unsatisfied, you may lodge a complaint with the <strong>Office of the Australian Information Commissioner (OAIC)</strong> at <a href="https://www.oaic.gov.au" className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">oaic.gov.au</a>.</p>
         </section>
 
         <section>

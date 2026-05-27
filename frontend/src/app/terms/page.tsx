@@ -1,5 +1,5 @@
 export default function TermsOfServicePage() {
-  const updated = '19 April 2026';
+  const updated = '26 May 2026';
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
