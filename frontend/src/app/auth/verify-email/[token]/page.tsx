@@ -17,6 +17,12 @@ export default function VerifyEmailPage() {
       .verifyEmail(token)
       .then(() => {
         updateUser({ email_verified: true });
+        // Notify all other open tabs so they update without a refresh
+        try {
+          const bc = new BroadcastChannel('auth');
+          bc.postMessage({ type: 'email_verified' });
+          bc.close();
+        } catch { /* BroadcastChannel not supported */ }
         setStatus('success');
       })
       .catch((err: ApiError) => {

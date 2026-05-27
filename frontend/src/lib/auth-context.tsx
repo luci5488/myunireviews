@@ -44,6 +44,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setHydrated(true));
   }, []);
 
+  // Listen for email verification from other tabs (BroadcastChannel)
+  useEffect(() => {
+    try {
+      const bc = new BroadcastChannel('auth');
+      bc.onmessage = (e) => {
+        if (e.data?.type === 'email_verified') {
+          setUser((prev) => prev ? { ...prev, email_verified: true } : prev);
+        }
+      };
+      return () => bc.close();
+    } catch { /* BroadcastChannel not supported */ }
+  }, []);
+
   const login = useCallback((t: string, u: User) => {
     setToken(t);
     setUser(u);
