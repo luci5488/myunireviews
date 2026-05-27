@@ -1,13 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <rect width="256" height="256" rx="48" fill="#2563EB"/>
-  <!-- Graduation cap -->
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="256" height="256" rx="48" fill="#2563EB"/>
   <g transform="translate(128, 100)">
     <polygon points="0,-52 120,-14 0,26 -120,-14" fill="#FFFFFF"/>
     <path d="M -72,4 L -72,38 Q -72,54 0,54 Q 72,54 72,38 L 72,4 L 0,30 Z" fill="#FFFFFF"/>
     <line x1="80" y1="-7" x2="92" y2="48" stroke="#FBBF24" stroke-width="6" stroke-linecap="round"/>
     <circle cx="92" cy="54" r="9" fill="#FBBF24"/>
   </g>
-  <!-- Star -->
   <g transform="translate(128, 208)">
     <polygon points="0,-34 10,-11 34,-11 14,4 21,27 0,14 -21,27 -14,4 -34,-11 -10,-11" fill="#FBBF24"/>
   </g>
