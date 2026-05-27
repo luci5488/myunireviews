@@ -70,6 +70,9 @@ export default function ModerationPage() {
     enabled: tab === 'professors' && !!token,
   });
 
+  const onError = (err: unknown) =>
+    setMutationError((err as Error).message ?? 'Action failed — please try again.');
+
   const editProfMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof modApi.editProfessor>[1] }) =>
       withFresh(t => modApi.editProfessor(id, data, t)),
@@ -82,9 +85,6 @@ export default function ModerationPage() {
     onSuccess: () => { setMutationError(null); setDeletingProfId(null); queryClient.invalidateQueries({ queryKey: ['mod-professors'] }); },
     onError,
   });
-
-  const onError = (err: unknown) =>
-    setMutationError((err as Error).message ?? 'Action failed — please try again.');
 
   const approveMutation = useMutation({
     mutationFn: (id: number) => withFresh(t => modApi.approve(id, t)),
