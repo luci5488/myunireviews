@@ -46,13 +46,8 @@ app.use(cookieParser());
 app.use(express.json({ limit: '64kb' }));
 
 // ── Rate limiting ──────────────────────────────────────────────
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 20,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// authLimiter (20/15 min) lives in routes/auth.ts, applied only to
+// login / register / forgot-password / reset-password to prevent brute-force.
 
 
 const readLimiter = rateLimit({
@@ -72,7 +67,7 @@ const writeLimiter = rateLimit({
 });
 
 // ── Routes ─────────────────────────────────────────────────────
-app.use('/api/auth',        authLimiter,  authRoutes);
+app.use('/api/auth',        readLimiter,  authRoutes);
 app.use('/api/reviews',     readLimiter,  reviewRoutes);
 app.use('/api/institutions',readLimiter,  institutionRoutes);
 app.use('/api/courses',     readLimiter,  courseRoutes);
@@ -80,7 +75,7 @@ app.use('/api/professors',  readLimiter,  professorRoutes);
 app.use('/api/moderation',  writeLimiter, moderationRoutes);
 app.use('/api/search',      readLimiter,  searchRoutes);
 app.use('/api/bookmarks',   readLimiter,  bookmarkRoutes);
-app.use('/api/contact',     authLimiter,  contactRoutes);
+app.use('/api/contact',     writeLimiter, contactRoutes);
 
 app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
 

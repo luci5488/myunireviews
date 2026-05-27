@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { pool } from '../config/db';
 import { authenticate } from '../middleware/auth';
@@ -10,6 +11,17 @@ import { AuthRequest } from '../types';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/mailer';
 
 const router = Router();
+
+// Strict limiter only for brute-force-sensitive routes (login, register,
+// forgot-password, reset-password). All other auth endpoints (/me, verify-email,
+// logout, notifications etc.) are covered by the app-level readLimiter.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 20,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const registerSchema = z.object({
   email: z.string().email().refine((e) => e.toLowerCase().endsWith('.edu.au'), {
@@ -64,6 +76,7 @@ function clearAuthCookie(res: Response) {
 // POST /api/auth/register
 router.post(
   '/register',
+  authLimiter,
   validate(registerSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, username, password, institution_id, year_of_study, email_marketing_consent } = req.body;
@@ -148,6 +161,7 @@ router.post(
 // POST /api/auth/login
 router.post(
   '/login',
+  authLimiter,
   validate(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, password, remember_me } = req.body;
@@ -286,15 +300,31 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const incomingHash = crypto.createHash('sha256').update(req.params.token).digest('hex');
     const { rows: [tokenRow] } = await pool.query(
-      `SELECT id, student_id, expires_at, used_at
-       FROM email_verification_tokens WHERE token_hash = $1`,
+      `SELECT evt.id, evt.student_id, evt.expires_at, evt.used_at, s.email_verified
+       FROM email_verification_tokens evt
+       JOIN students s ON s.id = evt.student_id
+       WHERE evt.token_hash = $1`,
       [incomingHash]
     );
 
-    if (!tokenRow || tokenRow.used_at) {
+    if (!tokenRow) {
       res.status(400).json({ error: 'Invalid or already used verification link.' });
       return;
     }
+
+    // Token already used — this happens when an email security scanner
+    // (Gmail, Outlook Safe Links, etc.) pre-fetches the link before the user
+    // clicks it. If the student is already verified, treat it as success so
+    // the user isn't shown a confusing error after clicking their own link.
+    if (tokenRow.used_at) {
+      if (tokenRow.email_verified) {
+        res.json({ message: 'Email verified successfully! You now have full access.' });
+      } else {
+        res.status(400).json({ error: 'Invalid or already used verification link.' });
+      }
+      return;
+    }
+
     if (new Date(tokenRow.expires_at) < new Date()) {
       res.status(400).json({ error: 'Verification link has expired. Request a new one.' });
       return;
@@ -375,6 +405,7 @@ router.post(
 // POST /api/auth/forgot-password
 router.post(
   '/forgot-password',
+  authLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body as { email?: string };
     if (!email || typeof email !== 'string') {
@@ -409,6 +440,7 @@ router.post(
 // POST /api/auth/reset-password
 router.post(
   '/reset-password',
+  authLimiter,
   validate(z.object({
     token: z.string().min(1),
     password: z.string().min(8).max(72),
